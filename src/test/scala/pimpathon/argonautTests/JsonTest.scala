@@ -1,10 +1,9 @@
 package pimpathon.argonautTests
 
 import argonaut.Json._
-import argonaut._
 import argonaut.StringWrap.StringToStringWrap
-import org.junit.Test
-import pimpathon.Descendant
+import argonaut._
+import pimpathon.PimpathonSuite
 import pimpathon.argonaut._
 import pimpathon.util.on
 import sjc.delta.argonaut.json.actualExpected.flat._
@@ -12,8 +11,8 @@ import sjc.delta.argonaut.matchers._
 import sjc.delta.matchers.syntax.anyDeltaMatcherOps
 
 
-class JsonTest extends JsonUtil {
-  @Test def booleanFilter(): Unit = {
+class JsonTest extends PimpathonSuite with JsonUtil {
+  test( "booleanFilter") {
     val json = parse(
       """{
         | "people": [
@@ -28,23 +27,27 @@ class JsonTest extends JsonUtil {
     json.descendant("$.people[?(@.person.name == 'Arnie' || @.person.age == 21)].address").getAll <=> List(jString("California"), jString("Brisvegas"))
   }
 
-  @Test def filterNulls(): Unit = test(_.filterNulls,
-    """null"""                        → """null""",
-    """{ "a": null, "b": 3 }"""       → """{ "b": 3 }""",
-    """[ "a", null, "b" ]"""          → """[ "a", "b" ]""",
-    """{ "o": [ "a", null, "b" ] }""" → """{ "o": [ "a", "b" ] }""",
-    """[ { "a": null, "b": 3 } ]"""   → """[ { "b": 3 } ]"""
-  )
+  test( "filterNulls")  {
+    test(_.filterNulls,
+      """null""" → """null""",
+      """{ "a": null, "b": 3 }""" → """{ "b": 3 }""",
+      """[ "a", null, "b" ]""" → """[ "a", "b" ]""",
+      """{ "o": [ "a", null, "b" ] }""" → """{ "o": [ "a", "b" ] }""",
+      """[ { "a": null, "b": 3 } ]""" → """[ { "b": 3 } ]"""
+    )
+  }
 
-  @Test def filterR(): Unit = test(_.filterR(_ != Json.jEmptyObject),
-    """{}"""                        → """null""",
-    """{ "a": {}, "b": 3 }"""       → """{ "b": 3 }""",
-    """[ "a", {}, "b" ]"""          → """[ "a", "b" ]""",
-    """{ "o": [ "a", {}, "b" ] }""" → """{ "o": [ "a", "b" ] }""",
-    """[ { "a": {}, "b": 3 } ]"""   → """[ { "b": 3 } ]"""
-  )
+  test( "filterR") {
+    test(_.filterR(_ != Json.jEmptyObject),
+      """{}""" → """null""",
+      """{ "a": {}, "b": 3 }""" → """{ "b": 3 }""",
+      """[ "a", {}, "b" ]""" → """[ "a", "b" ]""",
+      """{ "o": [ "a", {}, "b" ] }""" → """{ "o": [ "a", "b" ] }""",
+      """[ { "a": {}, "b": 3 } ]""" → """[ { "b": 3 } ]"""
+    )
+  }
 
-  @Test def descendant_values(): Unit = {
+  test( "descendant_values"){
     jobj.descendant("age").getAll <=> List(age)
     jobj.descendant("age").modify(_ ⇒ redacted) <=> ("age" → redacted) ->: jobj
 
@@ -55,11 +58,11 @@ class JsonTest extends JsonUtil {
     jobj.descendant("age").int.modify(_ * 2) <=> ("age" → jNumber(6)) ->: jobj
   }
 
-  @Test def descendant_multiple(): Unit = {
+  test( "descendant_multiple")  {
     jobj.descendant("name", "age").getAll <=> List(name, age)
   }
 
-  @Test def descendant_elements(): Unit = {
+  test( "descendant_elements")  {
     jArray(fields).descendant("[0, 2]").getAll <=> List(lying, address)
 
     jArray(fields).descendant("[0, 2]").modify(_ ⇒ redacted) <=> jArrayElements(
@@ -67,7 +70,7 @@ class JsonTest extends JsonUtil {
     )
   }
 
-  @Test def descendant_all(): Unit = {
+  test( "descendant_all") {
     jobj.descendant("*").getAll <=> List(name, age, lying, address, preferences, width, potatoes, knownUnknowns, awkward)
 
     jobj.descendant("*").modify(_ ⇒ jString("redacted")) <=> jObjectFields(
@@ -76,7 +79,7 @@ class JsonTest extends JsonUtil {
     )
   }
 
-  @Test def descendant_ancestors(): Unit = {
+  test( "descendant_ancestors") {
     jobj.descendant("$.preferences.bananas").string.ancestors <=> jObjectFields(
       "$"                     -> Json.jArray(jobj.descendant("$").getAll),
       "$.preferences"         -> Json.jArray(jobj.descendant("$.preferences").getAll),
@@ -90,16 +93,16 @@ class JsonTest extends JsonUtil {
     )
   }
 
-  @Test def descendant_firstEmptyAt(): Unit = on((path: String) => jobj.descendant(path).firstEmptyAt).maps(
+  test( "descendant_firstEmptyAt") { on((path: String) => jobj.descendant(path).firstEmptyAt).maps(
     "$.preferences.bananas" → None, "$.preferences.apples" → Some("$.preferences.apples"), "$.prefs.apples" → Some("$.prefs")
-  )
+  )}
 
-  @Test def as(): Unit = {
+  test( "as") {
     jobj.descendant("$.address").as[Address].getAll            <=> List(Address(List("29 Acacia Road", "Nuttytown")))
     jobj.descendant("$.address").as[Address].modify(_.reverse) <=> jobj.descendant("$.address").array.modify(_.reverse)
   }
 
-  @Test def descendant_complex(): Unit = {
+  test( "descendant_complex") {
     jobj.descendant("preferences/*").bool.set(false)
         .descendant("address").array.string.modify("Flat B" :: _)
         .descendant("address/*").string.modify(_.toUpperCase)
@@ -126,7 +129,7 @@ class JsonTest extends JsonUtil {
         )
   }
 
-  @Test def descendant_dynamic_complex(): Unit = {
+  test( "descendant_dynamic_complex") {
     jobj.descendant.preferences.each.bool.set(false)
         .descendant.address.array.string.modify("Flat B" :: _)
         .descendant.address.each.string.modify(_.toUpperCase)
@@ -153,7 +156,7 @@ class JsonTest extends JsonUtil {
         )
   }
 
-  @Test def delete(): Unit = {
+  test( "delete") {
 //    println(parse(
 //      """{
 //        |   "a": {
@@ -255,7 +258,7 @@ class JsonTest extends JsonUtil {
       |}
     """.stripMargin)
 
-  @Test def workWithBooleanFilters(): Unit = {
+  test( "workWithBooleanFilters") {
     val json = parse("""{ "conditions": [true, false, true] }""")
 
     json.descendant("$.conditions[?(@ == true)]").getAll  <=> List(jTrue, jTrue)
@@ -263,7 +266,7 @@ class JsonTest extends JsonUtil {
     json.descendant("$.conditions[?(false == @)]").getAll <=> List(jFalse)
   }
 
-  @Test def `work with test set 3`(): Unit = {
+  test( "work with test set 3") {
     val json = parse("""{ "points": [
           				             { "id":"i1", "x": 4, "y":-5 },
           				             { "id":"i2", "x":-2, "y": 2, "z":1 },
@@ -285,7 +288,7 @@ class JsonTest extends JsonUtil {
     // Non supported syntax "$.points[(count(@)-1)].id"
   }
 
-  @Test def `"Multi-fields accessors" should "be interpreted correctly"`(): Unit = {
+  test( """"Multi-fields accessors" should "be interpreted correctly""""){
     val json = parse("""{"menu":{"year":2013,"file":"open","options":[{"bold":true},{"font":"helvetica"},{"size":3}]}}""")
     json.descendant("$.menu['file','year']").getAll <=> List(jNumber(2013), jString("open"))
     json.descendant("$.menu.options['foo','bar']").getAll <=> Nil
@@ -294,7 +297,7 @@ class JsonTest extends JsonUtil {
 //    json.descendant("$..options[*]['bold','size']").getAll <=> List(jTrue, jNumber(3))
   }
 
-  @Test def workWithDeepPredicates(): Unit = {
+  test( "workWithDeepPredicates"){
     val json = parse(
       """{
         | "people": [
@@ -306,71 +309,91 @@ class JsonTest extends JsonUtil {
     json.descendant("$.people[?(@.person.name == 'Arnie')].address").getAll <=> List(jString("California"))
   }
 
-  @Test def descendant_renameField(): Unit =
+  test( "descendant_renameField") {
     parse("""{ "thing": { "original": true } }""").descendant("thing").renameField("original", "renamed") <=> parse("""{ "thing": { "renamed": true } }""")
+  }
 
-  @Test def descendant_obj_renameField(): Unit =
+  test( "descendant_obj_renameField") {
     parse("""{ "thing": { "original": true } }""").descendant("thing").obj.renameField("original", "renamed") <=> parse("""{ "thing": { "renamed": true } }""")
+  }
 
-  @Test def renameField(): Unit =
+  test( "renameField") {
     jObjectFields("original" → jTrue).renameField("original", "renamed") <=> jObjectFields("renamed" → jTrue)
+  }
 
-  @Test def descendant_renameFields(): Unit =
+  test( "descendant_renameFields") {
     parse("""{ "thing": { "a": true, "b": false} }""").descendant("thing").renameFields("a" → "A", "b" → "B") <=> parse("""{ "thing": { "A": true, "B": false} }""")
+  }
 
-  @Test def descendant_obj_renameFields(): Unit =
+  test( "descendant_obj_renameFields") {
     parse("""{ "thing": { "a": true, "b": false} }""").descendant("thing").obj.renameFields("a" → "A", "b" → "B") <=> parse("""{ "thing": { "A": true, "B": false} }""")
+  }
 
-  @Test def renameFields(): Unit =
+  test( "renameFields") {
     jObjectFields("a" → jTrue, "b" → jFalse).renameFields("a" → "A", "b" → "B") <=> jObjectFields("A" → jTrue, "B" → jFalse)
+  }
 
-  @Test def descendant_addIfMissing(): Unit = on(
-    parse("""{ "thing": {} }"""),           parse("""{ "thing": {"a": true} }""")
-  ).calling(_.descendant("thing").addIfMissing("a", jFalse)).produces(
-    parse("""{ "thing": {"a": false} }"""), parse("""{ "thing": {"a": true} }""")
-  )
+  test("descendant_addIfMissing") {
+    on(
+      parse("""{ "thing": {} }"""), parse("""{ "thing": {"a": true} }""")
+    ).calling(_.descendant("thing").addIfMissing("a", jFalse)).produces(
+      parse("""{ "thing": {"a": false} }"""), parse("""{ "thing": {"a": true} }""")
+    )
+  }
 
-  @Test def descendant_obj_addIfMissing(): Unit = on(
-    parse("""{ "thing": {} }"""),           parse("""{ "thing": {"a": true} }""")
-  ).calling(_.descendant("thing").obj.addIfMissing("a", jFalse)).produces(
-    parse("""{ "thing": {"a": false} }"""), parse("""{ "thing": {"a": true} }""")
-  )
+  test( "descendant_obj_addIfMissing") {
+    on(
+      parse("""{ "thing": {} }"""), parse("""{ "thing": {"a": true} }""")
+    ).calling(_.descendant("thing").obj.addIfMissing("a", jFalse)).produces(
+      parse("""{ "thing": {"a": false} }"""), parse("""{ "thing": {"a": true} }""")
+    )
+  }
 
-  @Test def addIfMissing(): Unit = on(
-    jEmptyObject,      obj("a" := existing)
-  ).calling(_.addIfMissing("a", jString(added))).produces(
-    obj("a" := added), obj("a" := existing)
-  )
+  test( "addIfMissing") {
+    on(
+      jEmptyObject, obj("a" := existing)
+    ).calling(_.addIfMissing("a", jString(added))).produces(
+      obj("a" := added), obj("a" := existing)
+    )
+  }
 
-  @Test def descendant_addIfMissing_many(): Unit = on(
-    thing(jEmptyObject),         thing(obj("a" := existing)),
-    thing(obj("b" := existing)), thing(obj("a" := existing, "b" := existing))
-  ).calling(_.descendant("thing").addIfMissing("a" := added, "b" := added)).produces(
-    thing(obj("a" := added, "b" := added)),    thing(obj("a" := existing, "b" := added)),
-    thing(obj("a" := added, "b" := existing)), thing(obj("a" := existing, "b" := existing))
-  )
+  test( "descendant_addIfMissing_many") {
+    on(
+      thing(jEmptyObject), thing(obj("a" := existing)),
+      thing(obj("b" := existing)), thing(obj("a" := existing, "b" := existing))
+    ).calling(_.descendant("thing").addIfMissing("a" := added, "b" := added)).produces(
+      thing(obj("a" := added, "b" := added)), thing(obj("a" := existing, "b" := added)),
+      thing(obj("a" := added, "b" := existing)), thing(obj("a" := existing, "b" := existing))
+    )
+  }
 
-  @Test def descendant_obj_addIfMissing_many(): Unit = on(
-    thing(jEmptyObject),         thing(obj("a" := existing)),
-    thing(obj("b" := existing)), thing(obj("a" := existing, "b" := existing))
-  ).calling(_.descendant("thing").obj.addIfMissing("a" := added, "b" := added)).produces(
-    thing(obj("a" := added, "b" := added)),    thing(obj("a" := existing, "b" := added)),
-    thing(obj("a" := added, "b" := existing)), thing(obj("a" := existing, "b" := existing))
-  )
+  test( "descendant_obj_addIfMissing_many") {
+    on(
+      thing(jEmptyObject), thing(obj("a" := existing)),
+      thing(obj("b" := existing)), thing(obj("a" := existing, "b" := existing))
+    ).calling(_.descendant("thing").obj.addIfMissing("a" := added, "b" := added)).produces(
+      thing(obj("a" := added, "b" := added)), thing(obj("a" := existing, "b" := added)),
+      thing(obj("a" := added, "b" := existing)), thing(obj("a" := existing, "b" := existing))
+    )
+  }
 
-  @Test def addIfMissing_many(): Unit = on(
-    jEmptyObject,         obj("a" := existing),
-    obj("b" := existing), obj("a" := existing, "b" := existing)
-  ).calling(_.addIfMissing("a" := added, "b" := added)).produces(
-    obj("a" := added, "b" := added),    obj("a" := existing, "b" := added),
-    obj("a" := added, "b" := existing), obj("a" := existing, "b" := existing)
-  )
+  test( "addIfMissing_many") {
+    on(
+      jEmptyObject, obj("a" := existing),
+      obj("b" := existing), obj("a" := existing, "b" := existing)
+    ).calling(_.addIfMissing("a" := added, "b" := added)).produces(
+      obj("a" := added, "b" := added), obj("a" := existing, "b" := added),
+      obj("a" := added, "b" := existing), obj("a" := existing, "b" := existing)
+    )
+  }
 
-  @Test def removeFields(): Unit = on(
-    obj("a" := "value", "b" := 123, "c" := true), obj("a" := "value", "b" := 123)
-  ).calling(_.removeFields("b", "c")).produces(
-    obj("a" := "value"), obj("a" := "value")
-  )
+  test( "removeFields") {
+    on(
+      obj("a" := "value", "b" := 123, "c" := true), obj("a" := "value", "b" := 123)
+    ).calling(_.removeFields("b", "c")).produces(
+      obj("a" := "value"), obj("a" := "value")
+    )
+  }
 
   private def test(f: Json ⇒ Json, data: (String, String)*): Unit = data.foreach {
     case (input, expected) ⇒ f(parse(input)) <=> parse(expected)
@@ -382,26 +405,32 @@ class JsonTest extends JsonUtil {
   private val existing = "existing"
 }
 
-class JsonObjectTest extends JsonUtil {
-  @Test def renameField(): Unit =
+class JsonObjectTest extends PimpathonSuite with JsonUtil {
+  test( "renameField") {
     obj("original" := true).withObject(_.renameField("original", "renamed")) <=> obj("renamed" := true)
+  }
 
-  @Test def renameFields(): Unit =
+  test( "renameFields") {
     obj("a" := true, "b" := false).withObject(_.renameFields("a" → "A", "b" → "B")) <=> obj("A" := true, "B" := false)
+  }
 
-  @Test def addIfMissing(): Unit = on(
-    jEmptyObject,     obj("a" := existing)
-  ).calling(_.withObject(_.addIfMissing("a", added))).produces(
-    obj("a" := added), obj("a" := existing)
-  )
+  test( "addIfMissing") {
+    on(
+      jEmptyObject, obj("a" := existing)
+    ).calling(_.withObject(_.addIfMissing("a", added))).produces(
+      obj("a" := added), obj("a" := existing)
+    )
+  }
 
-  @Test def addIfMissing_many(): Unit = on(
-    jEmptyObject,        obj("a" := existing),
-    obj("b" := existing), obj("a" := existing, "b" := existing)
-  ).calling(_.withObject(_.addIfMissing("a" := added, "b" := added))).produces(
-    obj("a" := added, "b" := added),    obj("a" := existing, "b" := added),
-    obj("a" := added, "b" := existing), obj("a" := existing, "b" := existing)
-  )
+  test( "addIfMissing_many") {
+    on(
+      jEmptyObject, obj("a" := existing),
+      obj("b" := existing), obj("a" := existing, "b" := existing)
+    ).calling(_.withObject(_.addIfMissing("a" := added, "b" := added))).produces(
+      obj("a" := added, "b" := added), obj("a" := existing, "b" := added),
+      obj("a" := added, "b" := existing), obj("a" := existing, "b" := existing)
+    )
+  }
 
   private val added    = jString("added")
   private val existing = jString("existing")

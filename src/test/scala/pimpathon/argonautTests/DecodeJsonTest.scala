@@ -1,22 +1,38 @@
 package pimpathon.argonautTests
 
 import _root_.argonaut._
-import org.junit.Test
+import pimpathon.PimpathonSuite
 import pimpathon.argonaut._
 import pimpathon.util._
 
 
-class DecodeJsonTest extends JsonUtil {
-  @Test def beforeDecode(): Unit = decoder.beforeDecode(reverse).decodeJson(json) === decoder.decodeJson(reverse(json))
-  @Test def compose(): Unit      = decoder.compose(reverse).decodeJson(json)      === decoder.decodeJson(reverse(json))
-  @Test def upcast(): Unit       = Derived.codec.upcast[Base].decodeJson(derivedEncoded) === DecodeResult.ok(derived)
+class DecodeJsonTest extends PimpathonSuite with JsonUtil {
+  test("beforeDecode") {
+    decoder.beforeDecode(reverse).decodeJson(json) === decoder.decodeJson(reverse(json))
+  }
 
-  @Test def mapEntries(): Unit =
-    mapDecoder.mapEntries(reverseEntry).decodeJson(jsonMap("foo" → "bar")) === mapDecoder.decodeJson(jsonMap("oof" → "rab"))
+  test("compose") {
+    decoder.compose(reverse).decodeJson(json) === decoder.decodeJson(reverse(json))
+  }
 
-  @Test def mapKeys(): Unit =
-    mapDecoder.mapKeys(_.reverse).decodeJson(jsonMap("foo" → "bar")) === mapDecoder.decodeJson(jsonMap("oof" → "bar"))
+  test("upcast") {
+    Derived.codec.upcast[Base].decodeJson(derivedEncoded) === DecodeResult.ok(derived)
+  }
 
-  @Test def mapValues(): Unit =
-    mapDecoder.mapValues(_.reverse).decodeJson(jsonMap("foo" → "bar")) === mapDecoder.decodeJson(jsonMap("foo" → "rab"))
+  test("mapEntries") {
+    mapDecoder.mapEntries(reverseEntry).decodeJson(jsonMap("foo" → "bar")) ===
+      mapDecoder.decodeJson(jsonMap("oof" → "rab"))
+  }
+
+
+  test("mapKeys") {
+    mapDecoder.mapKeys(_.reverse).decodeJson(jsonMap("foo" → "bar")) ===
+      mapDecoder.decodeJson(jsonMap("oof" → "bar"))
+  }
+
+  test("mapValues") {
+    mapDecoder.mapValues(_.reverse).decodeJson(jsonMap("foo" → "bar")) ===
+      mapDecoder.decodeJson(jsonMap("foo" → "rab"))
+  }
+
 }

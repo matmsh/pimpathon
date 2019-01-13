@@ -3,40 +3,41 @@ package pimpathon.java.io
 import java.nio.charset.Charset
 
 import scala.language.reflectiveCalls
-
 import java.io._
 import java.util.zip.GZIPOutputStream
-import org.junit.Test
-import scala.util.{Failure, Success}
 
+import pimpathon.PimpathonSuite
+
+import scala.util.{Failure, Success}
+import pimpathon.util
 import pimpathon.util._
 import pimpathon.any._
 
 
-class InputStreamTest {
-  @Test def attemptClose(): Unit = {
+class InputStreamTest extends PimpathonSuite{
+  test("attemptClose") {
     createInputStream().attemptClose() === Success(())
-    new ByteArrayInputStream(Array()) { override def close() = goBoom }.attemptClose() === Failure(boom)
+    new ByteArrayInputStream(Array()) { override def close():Unit = goBoom }.attemptClose() === Failure(boom)
   }
 
-  @Test def closeAfter(): Unit = {
+  test("closeAfter") {
     val is = createInputStream()
 
     is.closeAfter(_ ⇒ "result") === "result"
     is.assertClosed
   }
 
-  @Test def closeIf(): Unit = {
+  test("closeIf"){
     createInputStream().closeIf(condition = false).assertOpen
     createInputStream().closeIf(condition = true).assertClosed
   }
 
-  @Test def closeUnless(): Unit = {
+  test("closeUnless") {
     createInputStream().closeUnless(condition = true).assertOpen
     createInputStream().closeUnless(condition = false).assertClosed
   }
 
-  @Test def drain(): Unit = {
+  test("drain") {
     for { closeIn ← List(false, true); closeOut ← List(false, true); input ← List("Input", "Repeat" * 100) } {
       val (is, os) = (createInputStream(input), createOutputStream())
 
@@ -57,7 +58,7 @@ class InputStreamTest {
     }
   }
 
-  @Test def >> (): Unit = {
+  test(">>") {
     val (is, os) = (createInputStream("content"), createOutputStream())
 
     is >> os
@@ -67,14 +68,14 @@ class InputStreamTest {
     os.assertOpen
   }
 
-  @Test def buffered(): Unit = {
+  test("buffered") {
     val (is, os) = (createInputStream("content"), createOutputStream())
     (is.buffered: BufferedInputStream).drain(os)
 
     os.toString === "content"
   }
 
-  @Test def gunzip(): Unit = {
+  test("gunzip") {
     import pimpathon.java.io.outputStream._
 
     val os     = createOutputStream().tap(os ⇒ new GZIPOutputStream(os).closeAfter(_.write("content".getBytes)))
@@ -83,9 +84,9 @@ class InputStreamTest {
     result.toString === "content"
   }
 
-  @Test def readUpToN(): Unit = {
+  test("readUpToN") {
     def read(text: String, n: Int, bufferSize: Int = inputStream.bufferSize): String = {
-      val withBufferSize = new InputStreamUtils(bufferSize = bufferSize); import withBufferSize._
+      val withBufferSize = InputStreamUtils(bufferSize = bufferSize); import withBufferSize._
       val (is, os) = (createInputStream(text), createOutputStream())
 
       os.tap(is.readUpToN(_, n), _.close()).toString
@@ -98,12 +99,12 @@ class InputStreamTest {
     read("contents", 7, 2) === "content"
     read("content",  8, 2) === "content"
 
-    assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
+    util.assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
       read("contents", -1)
     }
   }
 
-  @Test def readN(): Unit = {
+  test("readN"){
     def read(text: String, n: Int): String = {
       val (is, os) = (createInputStream(text), createOutputStream())
       os.tap(is.readN(_, n), _.close()).toString
@@ -113,16 +114,16 @@ class InputStreamTest {
     read("contents", 4) === "cont"
     read("contents", 8) === "contents"
 
-    assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
+    util.assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
       read("contents", -1)
     }
 
-    assertThrows[IOException]("Failed to read 9 bytes, only 8 were available")(read("contents", 9))
+    util.assertThrows[IOException]("Failed to read 9 bytes, only 8 were available")(read("contents", 9))
   }
 
-  @Test def toByteArray(): Unit = new String(createInputStream("contents").toByteArray) === "contents"
+  test("toByteArray()"){ new String(createInputStream("contents").toByteArray) === "contents" }
 
-  @Test def asString(): Unit = {
+  test("asString") {
     new ByteArrayInputStream("contents".getBytes).asString === "contents"
     val UTF8 = Charset.forName("UTF-8")
     new ByteArrayInputStream("contents".getBytes(UTF8)).asString(UTF8) === "contents"

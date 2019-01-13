@@ -1,6 +1,5 @@
 package pimpathon
 
-import org.junit.Test
 import scala.util.{Failure, Success}
 
 import pimpathon.builder._
@@ -10,35 +9,50 @@ import pimpathon.tuple._
 import pimpathon.util._
 
 
-class EitherTest {
-  @Test def leftOr(): Unit  = on(Left("left"), Right("right")).calling(_.leftOr(_ + " !")).produces("left", "right !")
-  @Test def rightOr(): Unit = on(Left("left"), Right("right")).calling(_.rightOr(_ + " !")).produces("left !", "right")
+class EitherTest extends PimpathonSuite {
+  test("leftOr") { on(Left("left"), Right("right")).calling(_.leftOr(_ + " !")).produces("left", "right !") }
+  test("rightOr") { on(Left("left"), Right("right")).calling(_.rightOr(_ + " !")).produces("left !", "right") }
 
-  @Test def rescue(): Unit  = on(Right(123), Left("456")).calling(_.rescue(_.toInt)).produces(123, 456)
-  @Test def valueOr(): Unit = on(Right(123), Left("456")).calling(_.valueOr(_.toInt)).produces(123, 456)
+  test("rescue") { on(Right(123), Left("456")).calling(_.rescue(_.toInt)).produces(123, 456)}
+  test("valueOr"){ on(Right(123), Left("456")).calling(_.valueOr(_.toInt)).produces(123, 456) }
 
-  @Test def rescuePF(): Unit = on(Right(123), Left("456"), Left("123"))
-    .calling(_.rescue(util.partial("123" → 123))).produces(Right(123), Left("456"), Right(123))
+  test("rescuePF") {
+    on(Right(123), Left("456"), Left("123"))
+      .calling(_.rescue(util.partial("123" → 123))).produces(Right(123), Left("456"), Right(123))
+  }
 
-  @Test def valueOrPF(): Unit = on(Right(123), Left("456"), Left("123"))
-    .calling(_.valueOr(util.partial("123" → 123))).produces(Right(123), Left("456"), Right(123))
+  test("valueOrPF") {
+    on(Right(123), Left("456"), Left("123"))
+      .calling(_.valueOr(util.partial("123" → 123))).produces(Right(123), Left("456"), Right(123))
+  }
 
-  @Test def bimap(): Unit = on(left(1), right("foo"))
-    .calling(_.bimap(_.toString, _.length)).produces(Left[String, Int]("1"), Right[String, Int](3))
+  test("bimap") {
+    on(left(1), right("foo"))
+      .calling(_.bimap(_.toString, _.length)).produces(Left[String, Int]("1"), Right[String, Int](3))
+  }
 
-  @Test def leftMap(): Unit = on(left(1), right("foo"))
-    .calling(_.leftMap(_.toString)).produces(Left[String, String]("1"), Right[String, String]("foo"))
+  test("leftMap") {
+    on(left(1), right("foo"))
+      .calling(_.leftMap(_.toString)).produces(Left[String, String]("1"), Right[String, String]("foo"))
+  }
 
-  @Test def rightMap(): Unit = on(left(1), right("foo"))
-    .calling(_.rightMap(_.length)).produces(Left[Int, Int](1), Right[Int, Int](3))
+  test("rightMap") {
+    on(left(1), right("foo"))
+      .calling(_.rightMap(_.length)).produces(Left[Int, Int](1), Right[Int, Int](3))
+  }
 
-  @Test def leftFlatMap(): Unit = on(Right(123), Left("456"), Left("123"))
-    .calling(_.leftFlatMap(partial("123" → 123).toRight)).produces(Right(123), Left("456"), Right(123))
 
-  @Test def rightFlatMap(): Unit = on(Left(123), Right("456"), Right("123"))
-    .calling(_.rightFlatMap(partial("123" → 123).toLeft)).produces(Left(123), Right("456"), Left(123))
+  test("leftFlatMap") {
+    on(Right(123), Left("456"), Left("123"))
+      .calling(_.leftFlatMap(partial("123" → 123).toRight)).produces(Right(123), Left("456"), Right(123))
+  }
 
-  @Test def tap(): Unit = {
+  test("rightFlatMap") {
+    on(Left(123), Right("456"), Right("123"))
+      .calling(_.rightFlatMap(partial("123" → 123).toLeft)).produces(Left(123), Right("456"), Left(123))
+  }
+
+  test("tap()") {
     (ints(), strings()).tap(is ⇒ ss ⇒ left(1).tap(is += _, ss += _)).tmap(_.reset(), _.reset()) === (List(1), Nil)
 
     (ints(), strings()).tap(is ⇒ ss ⇒ right("foo").tap(is += _, ss += _)).tmap(_.reset(), _.reset()) === (
@@ -46,34 +60,39 @@ class EitherTest {
     )
   }
 
-  @Test def tapLeft(): Unit = {
+  test("tapLeft") {
     ints().run(is ⇒      left(1).tapLeft(is += _)) === List(1)
     ints().run(is ⇒ right("foo").tapLeft(is += _)) === Nil
   }
 
-  @Test def tapRight(): Unit = {
+  test("tapRight") {
     strings().run(ss ⇒      left(1).tapRight(ss += _)) === Nil
     strings().run(ss ⇒ right("foo").tapRight(ss += _)) === List("foo")
   }
 
-  @Test def addTo(): Unit = {
+  test("addTo") {
     (ints(), strings()).tap(is ⇒ ss ⇒ left(1).addTo(is, ss)).tmap(_.result(), _.result())      === (List(1), Nil)
     (ints(), strings()).tap(is ⇒ ss ⇒ right("foo").addTo(is, ss)).tmap(_.result(), _.result()) === (Nil, List("foo"))
   }
 
-  @Test def removeFrom(): Unit = {
+  test("removeFrom") {
     (ints(1), strings("oo")).tap(is ⇒ ss ⇒ left(1).removeFrom(is, ss)).tmap(_.toList, _.toList) === (Nil, List("oo"))
     (ints(1), strings("oo")).tap(is ⇒ ss ⇒ right("oo").removeFrom(is, ss)).tmap(_.toList, _.toList) === (List(1), Nil)
   }
 
-  @Test def getMessage(): Unit =
+  test("getMessage") {
     on(Left(boom), Right("foo")).calling(_.getMessage).produces(Some(boom.getMessage), None)
+  }
 
-  @Test def toTry(): Unit = on(Left[Throwable, String](boom), Right[Throwable, String]("foo"))
-    .calling(_.toTry).produces(Failure[String](boom), Success[String]("foo"))
+  test("toTry") {
+    on(Left[Throwable, String](boom), Right[Throwable, String]("foo"))
+      .calling(_.toTry).produces(Failure[String](boom), Success[String]("foo"))
+  }
 
-  @Test def toOption(): Unit = on(Left[Throwable, String](boom), Right[Throwable, String]("foo"))
-    .calling(_.toOption).produces(None, Some("foo"))
+  test("toOption") {
+    on(Left[Throwable, String](boom), Right[Throwable, String]("foo"))
+      .calling(_.toOption).produces(None, Some("foo"))
+  }
 
   private def left(i: Int): Either[Int, String] = Left(i)
   private def right(s: String): Either[Int, String] = Right(s)

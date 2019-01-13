@@ -1,13 +1,11 @@
 package pimpathon
 
-import org.junit.Test
-
 import pimpathon.filterMonadic._
 import pimpathon.util._
 
 
-class FilterMonadicTest {
-  @Test def toMultiMap(): Unit = {
+class FilterMonadicTest extends  PimpathonSuite {
+  test("toMultiMap") {
     Set.empty[(Int, Int)].toMultiMap[List]  === Map()
     List.empty[(Int, Int)].toMultiMap[List] === Map()
 

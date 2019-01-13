@@ -1,15 +1,12 @@
 package pimpathon
 
-import org.junit.Test
-
-import org.junit.Assert._
 import scala.math.Numeric._
 import pimpathon.numeric._
 import pimpathon.util._
 
 
-class NumericTest {
-  @Test def xmap(): Unit = {
+class NumericTest extends  PimpathonSuite {
+  test("xmap") {
     val numericString =
       implicitly[Numeric[Int]].xmap[String](_.toString, Integer.parseInt)
 
@@ -19,8 +16,11 @@ class NumericTest {
     numericString.negate("4") === "-4"
     numericString.toInt("4") === 4
     numericString.toLong("4") === 4L
-    assertEquals(4.0, numericString.toDouble("4"), 0.001)
-    assertEquals(4.0, numericString.toFloat("4"), 0.001)
+
+    assert(4.0 == numericString.toDouble("4")  )
+
+    assert(4.0 == numericString.toFloat("4") )
+
     numericString.fromInt(4) === "4"
     numericString.compare("1", "2") === (1 compare 2)
 
@@ -33,8 +33,10 @@ class NumericTest {
     numericListString.negate(List("4")) === List("-4")
     numericListString.toInt(List("4")) === 4
     numericListString.toLong(List("4")) === 4L
-    assertEquals(4.0, numericListString.toDouble(List("4")), 0.001)
-    assertEquals(4.0, numericListString.toFloat(List("4")), 0.001)
+    assert(4.0 ==  numericListString.toDouble(List("4")))
+
+    assert(4.0 == numericListString.toFloat(List("4")))
+
     numericListString.fromInt(4) === List("4")
     numericListString.compare(List("1"), List("2")) === (1 compare 2)
   }

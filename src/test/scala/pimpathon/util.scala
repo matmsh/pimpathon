@@ -1,25 +1,26 @@
 package pimpathon
 
 import scala.language.implicitConversions
-
 import _root_.java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 import _root_.java.util.concurrent.atomic.AtomicBoolean
 
-import scala.{PartialFunction ⇒ ~>}
+import org.scalatest.{Assertion, FunSuite}
+
+import scala.{PartialFunction => ~>}
 import scala.collection.mutable.ListBuffer
-import scala.collection.{mutable ⇒ M}
+import scala.collection.{mutable => M}
 import scala.reflect.ClassTag
 import scala.util.{DynamicVariable, Try}
-
-import org.junit.Assert._
 import pimpathon.list._
 import pimpathon.tuple._
 import pimpathon.pimpTry._
 
-
-object util {
+object util  {
   implicit class AnyTestPimp[A](val self: A) extends AnyVal {
-    def ===(expected: A): Unit = assertEquals(expected, self)
+
+    def ===(expected: A): Unit = {
+      assert(org.scalatest.Assertions.convertToEqualizer(expected) === self)
+    }
   }
 
   def ignore(f: ⇒ Unit): Unit = {}
@@ -32,7 +33,7 @@ object util {
     getMessage[T](f).getOrElse(sys.error("Expected exception: " + classTag.className[T]))
 
   def assertEqualsSet[A](expected: Set[A], actual: Set[A]): Unit = (expected -- actual, actual -- expected).calcC(
-    missing ⇒ extra ⇒ assertTrue(s"Extra: $extra, Missing: $missing", extra.isEmpty && missing.isEmpty)
+    missing ⇒ extra ⇒ assert( extra.isEmpty && missing.isEmpty, s"Extra: $extra, Missing: $missing")
   )
 
   case class calling[A, B](f: A ⇒ B) {
@@ -117,12 +118,17 @@ object util {
   trait Closeable extends _root_.java.io.Closeable {
     abstract override def close(): Unit = { closed.set(true); super.close() }
 
-    def assertOpen: Unit  = assertFalse(s"expected $kind to be open",   closed.get())
-    def assertClosed: Unit = assertTrue(s"expected $kind to be closed", closed.get())
+    def assertOpen: Unit  = assert(!closed.get(), s"expected $kind to be open")
+    def assertClosed: Unit = assert(closed.get(),  s"expected $kind to be closed")
 
     private val closed = new AtomicBoolean(false)
     private def kind = if (this.isInstanceOf[ByteArrayInputStream]) "InputStream" else "OutputStream"
   }
 
   private val dynamicTime = new DynamicVariable[Long](0)
+}
+
+class PimpathonSuite extends FunSuite {
+  override def convertToEqualizer[T](left: T): Equalizer[T] = new Equalizer(left)
+
 }

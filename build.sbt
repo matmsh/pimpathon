@@ -27,16 +27,16 @@ lazy val pimpathon = {
         "io.argonaut"                %% "argonaut-monocle" % "6.2-RC1"   % "provided",
         "org.scalaz"                 %% "scalaz-core"      % "7.3.0-M6"  % "provided",
         "io.gatling"                 %% "jsonpath"         % "0.6.8"     % "provided",
-        "com.novocode"               % "junit-interface"   % "0.11"      % "test",
-        "com.github.stacycurl"       %% "delta-matchers"   % "1.1.0"     % "test"
+        "com.github.stacycurl"       %% "delta-matchers"   % "1.1.0"     % "test",
+        "org.scalatest"              %% "scalatest"        % "3.0.5"     % "test"
       ), "2.11.7" → List(
         "com.github.julien-truffaut" %% "monocle-core"     % "1.2.2"  % "provided",
         "io.argonaut"                %% "argonaut"         % "6.2-M2" % "provided",
         "io.argonaut"                %% "argonaut-monocle" % "6.2-M2" % "provided",
         "org.scalaz"                 %% "scalaz-core"      % "7.2.2"  % "provided",
         "io.gatling"                 %% "jsonpath"         % "0.6.7"  % "provided",
-        "com.novocode"               %  "junit-interface"  % "0.11"   % "test",
-        "com.github.stacycurl"       %% "delta-matchers"   % "1.0.19" % "test"
+        "com.github.stacycurl"       %% "delta-matchers"   % "1.0.19" % "test",
+        "org.scalatest"              %% "scalatest"        % "3.0.5"  % "test"
       ))).value,
       doc := version.apply(Documentation.generate).value,
       initialize := {
@@ -51,4 +51,3 @@ lazy val pimpathon = {
     )).settings(Publishing.settings: _*)
 
 }
-

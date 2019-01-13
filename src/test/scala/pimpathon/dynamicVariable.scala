@@ -1,19 +1,17 @@
 package pimpathon
 
-import org.junit.Test
-
 import scala.util.DynamicVariable
 import dynamicVariable._
 import pimpathon.util._
 
 
-class DynamicVariableTest {
-  @Test def modify(): Unit = {
+class DynamicVariableTest extends PimpathonSuite {
+  test("modify") {
     dyn.modify(_ * 2)
     dyn.value === (123 * 2)
   }
 
-  @Test def withModification(): Unit = {
+  test("withModification") {
     dyn.withModification(_ * 2) {
       dyn.value === (123 * 2)
       "foo"

@@ -1,19 +1,20 @@
 package pimpathon.frills
 
-import org.junit.Test
+import pimpathon.PimpathonSuite
 import scalaz.NonEmptyList
-
 import pimpathon.frills.list._
 import pimpathon.util._
 import scalaz.syntax.either._
 
 
-class ListTest {
-  @Test def toNel(): Unit = on(Nil, List(1)).calling(_.toNel).produces(None, Some(NonEmptyList(1)))
+class ListTest extends PimpathonSuite{
+  test("toNel") { on(Nil, List(1)).calling(_.toNel).produces(None, Some(NonEmptyList(1))) }
 
-  @Test def onlyDisjunction(): Unit =
+  test("onlyDisjunction") {
     on(nil[Int], List(1, 2), List(1)).calling(_.onlyDisjunction).produces(Nil.left, List(1, 2).left, 1.right)
+  }
 
-  @Test def partitionDisjunctions(): Unit =
+  test("partitionDisjunctions") {
     List(1.left, "abc".right, "def".right, 2.left).partitionDisjunctions[List] === (List(1, 2), List("abc", "def"))
+  }
 }

@@ -1,11 +1,10 @@
 package pimpathon
 
-import org.junit.Test
 import pimpathon.util._
 
 
-class ClassTagTest {
-  @Test def className(): Unit       = classTag.className[ClassTagTest]       === "pimpathon.ClassTagTest"
-  @Test def simplecCassName(): Unit = classTag.simpleClassName[ClassTagTest] === "ClassTagTest"
-  @Test def klassOf(): Unit         = classTag.klassOf[ClassTagTest]         === classOf[ClassTagTest]
+class ClassTagTest extends  PimpathonSuite {
+  test("className")       { classTag.className[ClassTagTest]       === "pimpathon.ClassTagTest" }
+  test("simplecCassName") { classTag.simpleClassName[ClassTagTest] === "ClassTagTest" }
+  test("klassOf")         { classTag.klassOf[ClassTagTest]         === classOf[ClassTagTest] }
 }

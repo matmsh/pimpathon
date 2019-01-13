@@ -2,37 +2,39 @@ package pimpathon.java.io
 
 import java.io._
 import java.util.zip.GZIPInputStream
-import org.junit.Test
-import scala.util.{Failure, Success}
 
+
+import scala.util.{Failure, Success}
+import pimpathon.{PimpathonSuite, util}
 import pimpathon.util._
 import pimpathon.any._
 
 
-class OutputStreamTest {
-  @Test def attemptClose(): Unit = {
+class OutputStreamTest extends PimpathonSuite {
+
+  test("attemptClose"){
     createOutputStream().attemptClose() === Success(())
     new ByteArrayOutputStream() { override def close() = goBoom }.attemptClose() === Failure(boom)
   }
 
-  @Test def closeAfter(): Unit = {
+  test("closeAfter") {
     val os = createOutputStream()
 
     os.closeAfter(_ ⇒ "result") === "result"
     os.assertClosed
   }
 
-  @Test def closeIf(): Unit = {
+  test("closeI") {
     createOutputStream().closeIf(condition = false).assertOpen
     createOutputStream().closeIf(condition = true).assertClosed
   }
 
-  @Test def closeUnless(): Unit = {
+  test("closeUnless") {
     createOutputStream().closeUnless(condition = true).assertOpen
     createOutputStream().closeUnless(condition = false).assertClosed
   }
 
-  @Test def drain(): Unit = {
+  test("drain")  {
     for { closeIn ← List(false, true); closeOut ← List(false, true); input ← List("Input", "Repeat" * 100) } {
       val (is, os) = (createInputStream(input), createOutputStream())
 
@@ -53,7 +55,7 @@ class OutputStreamTest {
     }
   }
 
-  @Test def << (): Unit = {
+  test("<<") {
     val (is, os) = (createInputStream("content"), createOutputStream())
 
     os << is
@@ -63,20 +65,20 @@ class OutputStreamTest {
     is.assertOpen
   }
 
-  @Test def buffered(): Unit = {
+  test("buffered") {
     val (is, os) = (createInputStream("content"), createOutputStream())
 
     os.tap(o ⇒ (o.buffered: BufferedOutputStream).drain(is)).toString === "content"
   }
 
-  @Test def gzip(): Unit = {
+  test("gzip") {
     val os     = createOutputStream().tap(_.gzip.closeAfter(_.write("content".getBytes)))
     val result = createOutputStream().tap(rs ⇒ new GZIPInputStream(createInputStream(os.toByteArray)).drain(rs))
 
     result.toString === "content"
   }
 
-  @Test def writeUpToN(): Unit = {
+  test("writeUpToN") {
     def write(text: String, n: Int): String = {
       val (is, os) = (createInputStream(text), createOutputStream())
       os.tap(_.writeUpToN(is, n), _.close()).toString
@@ -87,12 +89,12 @@ class OutputStreamTest {
     write("contents", 9) === "contents"
     write("contents", 0) === ""
 
-    assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
+    util.assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
       write("contents", -1)
     }
   }
 
-  @Test def writeN(): Unit = {
+  test("writeN") {
     def write(text: String, n: Int): String = {
       val (is, os) = (createInputStream(text), createOutputStream())
       os.tap(_.writeN(is, n), _.close()).toString
@@ -102,10 +104,10 @@ class OutputStreamTest {
     write("contents", 8) === "contents"
     write("contents", 0) === ""
 
-    assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
+    util.assertThrows[IllegalArgumentException]("requirement failed: You can't read a negative number of bytes!") {
       write("contents", -1)
     }
 
-    assertThrows[IOException]("Failed to write 9 only 8 were available")(write("contents", 9))
+    util.assertThrows[IOException]("Failed to write 9 only 8 were available")(write("contents", 9))
   }
 }
